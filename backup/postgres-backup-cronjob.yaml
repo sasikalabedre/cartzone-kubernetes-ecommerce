@@ -1,0 +1,55 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: cartzone-postgres-backup
+  namespace: work
+spec:
+  schedule: "*/5 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: cartzone-postgres-backup
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: postgres-backup
+              image: postgres:16
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -eu
+                  FILE="/backups/cartzone-$(date +%Y%m%d-%H%M%S).sql"
+                  pg_dump -h cartzone-postgres \
+                    -U "$POSTGRES_USER" \
+                    -d "$POSTGRES_DB" \
+                    > "$FILE"
+                  echo "Backup created: $FILE"
+              env:
+                - name: POSTGRES_DB
+                  valueFrom:
+                    configMapKeyRef:
+                      name: cartzone-config
+                      key: POSTGRES_DB
+                - name: POSTGRES_USER
+                  valueFrom:
+                    configMapKeyRef:
+                      name: cartzone-config
+                      key: POSTGRES_USER
+                - name: PGPASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: cartzone-secret
+                      key: POSTGRES_PASSWORD
+              volumeMounts:
+                - name: backup-storage
+                  mountPath: /backups
+          volumes:
+            - name: backup-storage
+              persistentVolumeClaim:
+                claimName: cartzone-backup-pvc

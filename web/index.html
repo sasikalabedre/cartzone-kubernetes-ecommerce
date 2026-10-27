@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cartzone - Online Store</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f4f6f8;
+            color: #222;
+        }
+
+        h1 {
+            color: #174ea6;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px #ddd;
+        }
+
+        button {
+            background: #174ea6;
+            color: white;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #0d3475;
+        }
+
+        input {
+            padding: 9px;
+            width: 80px;
+            margin: 8px;
+        }
+
+        #message {
+            font-weight: bold;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Cartzone</h1>
+    <p>Welcome to our online store!</p>
+
+    <div class="card">
+        <h2>Available Products</h2>
+        <button onclick="loadProducts()">Refresh Products</button>
+        <div id="products">Loading products...</div>
+    </div>
+
+    <div class="card">
+        <h2>Place an Order</h2>
+
+        <label for="productId">Product ID:</label>
+        <input id="productId" type="number" min="1" value="1">
+
+        <label for="quantity">Quantity:</label>
+        <input id="quantity" type="number" min="1" value="1">
+
+        <button onclick="placeOrder()">Place Order</button>
+        <p id="message"></p>
+    </div>
+
+    <script>
+        async function loadProducts() {
+            const container = document.getElementById("products");
+
+            try {
+                const response = await fetch("/api/products");
+
+                if (!response.ok) {
+                    throw new Error("Could not load products");
+                }
+
+                const products = await response.json();
+
+                container.innerHTML = "";
+
+                products.forEach(product => {
+                    const item = document.createElement("p");
+                    item.textContent =
+                        `ID: ${product.id} | ${product.name} | ₹${product.price}`;
+                    container.appendChild(item);
+                });
+            } catch (error) {
+                container.textContent =
+                    "Unable to load products. Please try again.";
+            }
+        }
+
+        async function placeOrder() {
+            const productId = Number(
+                document.getElementById("productId").value
+            );
+            const quantity = Number(
+                document.getElementById("quantity").value
+            );
+            const message = document.getElementById("message");
+
+            message.textContent = "Submitting order...";
+
+            try {
+                const response = await fetch("/api/orders", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        product_id: productId,
+                        quantity: quantity
+                    })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.error || "Order failed");
+                }
+
+                message.textContent =
+                    `Order placed successfully! Order ID: ${result.id}`;
+            } catch (error) {
+                message.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        loadProducts();
+    </script>
+</body>
+</html>

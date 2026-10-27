@@ -1,0 +1,10 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: cartzone-api-pdb
+  namespace: work
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: cartzone-api

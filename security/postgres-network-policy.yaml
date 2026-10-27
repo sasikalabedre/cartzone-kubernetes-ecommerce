@@ -1,0 +1,22 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: cartzone-postgres-policy
+  namespace: work
+spec:
+  podSelector:
+    matchLabels:
+      app: cartzone-postgres
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: cartzone-api
+        - podSelector:
+            matchLabels:
+              app: cartzone-postgres-backup
+      ports:
+        - protocol: TCP
+          port: 5432

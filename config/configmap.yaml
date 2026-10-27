@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cartzone-config
+  namespace: work
+data:
+  POSTGRES_DB: cartzone
+  POSTGRES_USER: cartzone_user
+  API_SERVICE: cartzone-api
+  API_PORT: "5000"
